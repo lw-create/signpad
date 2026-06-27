@@ -139,19 +139,18 @@ class SignaturePad {
     getImage() {
         if (!this.hasSignature) return null;
 
-        // 创建透明背景的画布
+        // 创建透明背景的画布，使用实际像素尺寸
+        const dpr = window.devicePixelRatio || 1;
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
         const tempCanvas = document.createElement('canvas');
-        const rect = this.canvas.getBoundingClientRect();
-        tempCanvas.width = rect.width * (window.devicePixelRatio || 1);
-        tempCanvas.height = rect.height * (window.devicePixelRatio || 1);
+        tempCanvas.width = canvasWidth;
+        tempCanvas.height = canvasHeight;
         const tempCtx = tempCanvas.getContext('2d');
 
-        // 缩放
-        const dpr = window.devicePixelRatio || 1;
-        tempCtx.scale(dpr, dpr);
-
-        // 绘制签名
-        tempCtx.drawImage(this.canvas, 0, 0, rect.width, rect.height);
+        // 直接按实际像素尺寸绘制，不缩放
+        tempCtx.drawImage(this.canvas, 0, 0, canvasWidth, canvasHeight);
 
         return tempCanvas.toDataURL('image/png');
     }

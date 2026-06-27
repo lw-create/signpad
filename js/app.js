@@ -84,6 +84,14 @@
             }
         });
 
+        // 签名粗细调节
+        document.getElementById('thicknessSlider')?.addEventListener('input', (e) => {
+            const thickness = parseInt(e.target.value);
+            if (signaturePad) {
+                signaturePad.setThickness(thickness);
+            }
+        });
+
         // 确认签名
         document.getElementById('confirmSignBtn')?.addEventListener('click', () => {
             if (signaturePad && !signaturePad.isEmpty()) {
@@ -232,7 +240,7 @@
             // 以宽度 200px 为基准，高度按比例
             const baseWidth = 200;
             const ratio = state.signatureSize.height / state.signatureSize.width;
-            const defaultScale = 0.7;
+            const defaultScale = 1.0;
             const overlayWidth = baseWidth * defaultScale;
             const overlayHeight = baseWidth * ratio * defaultScale;
 
@@ -287,7 +295,7 @@
 
         const baseWidth = 200;
         const ratio = state.signatureSize.height / state.signatureSize.width;
-        const defaultScale = 0.7;
+        const defaultScale = 1.0;
         const overlayWidth = baseWidth * defaultScale;
         const overlayHeight = baseWidth * ratio * defaultScale;
 
@@ -343,12 +351,36 @@
         }, { passive: false });
 
         overlay.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
             if (isDragging) {
-                const touch = e.touches[0];
                 const dx = touch.clientX - startX;
                 const dy = touch.clientY - startY;
-                state.signaturePosition.x = startPosX + dx;
-                state.signaturePosition.y = startPosY + dy;
+                
+                // 计算签名当前尺寸
+                const baseWidth = 200;
+                const ratio = state.signatureSize.height / state.signatureSize.width;
+                const sigWidth = baseWidth * state.signaturePosition.scale;
+                const sigHeight = baseWidth * ratio * state.signaturePosition.scale;
+                
+                // 计算容器尺寸
+                const containerRect = container.getBoundingClientRect();
+                
+                // 计算新位置
+                let newX = startPosX + dx;
+                let newY = startPosY + dy;
+                
+                // 边界限制：签名不能完全拖出容器
+                // 左边限制
+                if (newX < -sigWidth + 20) newX = -sigWidth + 20;
+                // 右边限制
+                if (newX > containerRect.width - 20) newX = containerRect.width - 20;
+                // 上边限制
+                if (newY < -sigHeight + 20) newY = -sigHeight + 20;
+                // 下边限制
+                if (newY > containerRect.height - 20) newY = containerRect.height - 20;
+                
+                state.signaturePosition.x = newX;
+                state.signaturePosition.y = newY;
                 exporter.setSignaturePosition(
                     state.signaturePosition.x,
                     state.signaturePosition.y,
@@ -357,7 +389,6 @@
                 );
                 updateSignatureOverlay();
             } else if (isResizing) {
-                const touch = e.touches[0];
                 const dy = startY - touch.clientY;
                 const scaleChange = dy / 100;
                 state.signaturePosition.scale = Math.max(0.5, Math.min(3, startScale + scaleChange));
@@ -431,8 +462,32 @@
             if (isMouseDragging) {
                 const dx = e.clientX - mouseStartX;
                 const dy = e.clientY - mouseStartY;
-                state.signaturePosition.x = mouseStartPosX + dx;
-                state.signaturePosition.y = mouseStartPosY + dy;
+                
+                // 计算签名当前尺寸
+                const baseWidth = 200;
+                const ratio = state.signatureSize.height / state.signatureSize.width;
+                const sigWidth = baseWidth * state.signaturePosition.scale;
+                const sigHeight = baseWidth * ratio * state.signaturePosition.scale;
+                
+                // 计算容器尺寸
+                const containerRect = container.getBoundingClientRect();
+                
+                // 计算新位置
+                let newX = mouseStartPosX + dx;
+                let newY = mouseStartPosY + dy;
+                
+                // 边界限制：签名不能完全拖出容器
+                // 左边限制
+                if (newX < -sigWidth + 20) newX = -sigWidth + 20;
+                // 右边限制
+                if (newX > containerRect.width - 20) newX = containerRect.width - 20;
+                // 上边限制
+                if (newY < -sigHeight + 20) newY = -sigHeight + 20;
+                // 下边限制
+                if (newY > containerRect.height - 20) newY = containerRect.height - 20;
+                
+                state.signaturePosition.x = newX;
+                state.signaturePosition.y = newY;
                 exporter.setSignaturePosition(
                     state.signaturePosition.x,
                     state.signaturePosition.y,
