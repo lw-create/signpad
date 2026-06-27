@@ -97,9 +97,9 @@
             if (documentUpload && documentUpload.getImage()) {
                 state.documentImage = documentUpload.getImage();
                 goToStep('place');
-                setTimeout(async () => {
-                    await initPlacement();
-                }, 50);
+                // 等待页面渲染完成后再初始化
+                await new Promise(r => setTimeout(r, 100));
+                await initPlacement();
             }
         });
 
@@ -177,51 +177,58 @@
     }
 
     async function initPlacement() {
-        if (!state.documentImage || !state.signatureImage) return;
-
-        // 设置文档图片
-        await exporter.setDocumentImage(state.documentImage);
-
-        // 设置签名图片
-        await exporter.setSignatureImage(state.signatureImage);
-
-        // 显示签名预览
-        const signaturePreview = document.getElementById('signaturePreview');
-        if (signaturePreview) {
-            signaturePreview.src = state.signatureImage;
+        if (!state.documentImage || !state.signatureImage) {
+            console.warn('缺少图片数据', { document: !!state.documentImage, signature: !!state.signatureImage });
+            return;
         }
 
-        // 计算默认位置（文档底部中央）
-        const container = document.getElementById('placeContainer');
-        const containerRect = container.getBoundingClientRect();
-        const docCanvas = document.getElementById('documentCanvas');
+        try {
+            // 设置文档图片
+            await exporter.setDocumentImage(state.documentImage);
 
-        if (exporter.documentScale) {
-            const signatureWidth = 200 * exporter.documentScale;
-            const signatureHeight = 80 * exporter.documentScale;
+            // 设置签名图片
+            await exporter.setSignatureImage(state.signatureImage);
 
-            // 默认位置在底部居中
-            state.signaturePosition = {
-                x: containerRect.width / 2 - signatureWidth / 2,
-                y: containerRect.height - signatureHeight - 50,
-                scale: 1,
-                rotation: 0
-            };
+            // 显示签名预览
+            const signaturePreview = document.getElementById('signaturePreview');
+            if (signaturePreview) {
+                signaturePreview.src = state.signatureImage;
+            }
+
+            // 计算默认位置（文档底部中央）
+            const container = document.getElementById('placeContainer');
+            if (!container) return;
+            const containerRect = container.getBoundingClientRect();
+
+            if (exporter.documentScale) {
+                const signatureWidth = 200 * exporter.documentScale;
+                const signatureHeight = 80 * exporter.documentScale;
+
+                // 默认位置在底部居中
+                state.signaturePosition = {
+                    x: containerRect.width / 2 - signatureWidth / 2,
+                    y: containerRect.height - signatureHeight - 50,
+                    scale: 1,
+                    rotation: 0
+                };
+            }
+
+            // 设置位置
+            exporter.setSignaturePosition(
+                state.signaturePosition.x,
+                state.signaturePosition.y,
+                state.signaturePosition.scale,
+                state.signaturePosition.rotation
+            );
+
+            // 更新签名覆盖层位置
+            updateSignatureOverlay();
+
+            // 绑定拖拽事件
+            bindDragEvents();
+        } catch (err) {
+            console.error('初始化位置失败:', err);
         }
-
-        // 设置位置
-        exporter.setSignaturePosition(
-            state.signaturePosition.x,
-            state.signaturePosition.y,
-            state.signaturePosition.scale,
-            state.signaturePosition.rotation
-        );
-
-        // 更新签名覆盖层位置
-        updateSignatureOverlay();
-
-        // 绑定拖拽事件
-        bindDragEvents();
     }
 
     function updateSignatureOverlay() {
