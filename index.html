@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SignPad">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>SignPad - 电子签名</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 步骤指示器 -->
+        <div class="step-indicator">
+            <div class="step" data-step="sign">
+                <span class="step-num">1</span>
+                <span class="step-label">签名</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="upload">
+                <span class="step-num">2</span>
+                <span class="step-label">上传合同</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="place">
+                <span class="step-num">3</span>
+                <span class="step-label">调整位置</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="export">
+                <span class="step-num">4</span>
+                <span class="step-label">导出</span>
+            </div>
+        </div>
+
+        <!-- 步骤1: 签名 -->
+        <div class="step-content active" id="step-sign">
+            <div class="signature-page">
+                <div class="rotate-hint">
+                    <span>请横屏签署</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="4" y="2" width="16" height="20" rx="2"/>
+                        <line x1="12" y1="18" x2="12" y2="18.01"/>
+                    </svg>
+                </div>
+                <div class="signature-area">
+                    <canvas id="signatureCanvas"></canvas>
+                    <div class="signature-line"></div>
+                    <div class="signature-placeholder" id="signPlaceholder">在此处签名</div>
+                </div>
+                <div class="signature-tools">
+                    <div class="tool-group">
+                        <button class="tool-btn" id="colorBlack" title="黑色">
+                            <span class="color-dot black"></span>
+                        </button>
+                        <button class="tool-btn" id="colorBlue" title="蓝色">
+                            <span class="color-dot blue"></span>
+                        </button>
+                    </div>
+                    <div class="tool-group">
+                        <button class="tool-btn" id="clearBtn" title="清除">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="signature-actions">
+                    <button class="btn btn-primary" id="confirmSignBtn" disabled>确认签名</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 步骤2: 上传合同 -->
+        <div class="step-content" id="step-upload">
+            <div class="upload-page">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-hint">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
+                        </svg>
+                        <p id="uploadText">点击选择合同图片</p>
+                        <span id="uploadSubtext">拍照或从相册选择</span>
+                        <button class="btn btn-primary upload-btn" id="selectImageBtn">选择图片</button>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                </div>
+                <div class="upload-preview" id="uploadPreview" style="display:none;">
+                    <img id="previewImage" alt="合同预览">
+                </div>
+                <div class="upload-tip" id="uploadTip" style="display:none;">
+                    图片已加载，确认后可调整签名位置
+                </div>
+                <div class="upload-actions">
+                    <button class="btn btn-secondary" id="changeImageBtn" style="display:none;">更换图片</button>
+                    <button class="btn btn-primary" id="confirmUploadBtn" disabled>确认，下一步</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 步骤3: 位置调整 -->
+        <div class="step-content" id="step-place">
+            <div class="place-page">
+                <div class="place-container" id="placeContainer">
+                    <canvas id="documentCanvas"></canvas>
+                    <div class="signature-overlay" id="signatureOverlay">
+                        <img id="signaturePreview" alt="签名预览">
+                        <div class="resize-handle"></div>
+                    </div>
+                </div>
+                <div class="place-hint">
+                    <span>拖拽调整签名位置，双指缩放大小</span>
+                </div>
+                <div class="place-actions">
+                    <button class="btn btn-secondary" id="resetPositionBtn">重置位置</button>
+                    <button class="btn btn-primary" id="confirmPlaceBtn">确认位置</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 步骤4: 导出 -->
+        <div class="step-content" id="step-export">
+            <div class="export-page">
+                <div class="export-preview" id="exportPreview">
+                    <canvas id="exportCanvas"></canvas>
+                </div>
+                <div class="export-actions">
+                    <button class="btn btn-primary" id="downloadBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                        </svg>
+                        下载图片
+                    </button>
+                    <button class="btn btn-secondary" id="shareBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        分享
+                    </button>
+                    <button class="btn btn-text" id="restartBtn">重新开始</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/signature.js"></script>
+    <script src="js/upload.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "SignPad - 电子签名",
+  "short_name": "SignPad",
+  "description": "手机横屏签名，快速签署合同",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#2563eb",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
