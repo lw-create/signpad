@@ -301,7 +301,9 @@ body {
     display: flex;
     flex-direction: column;
     padding: 16px;
-    gap: 16px;
+    gap: 12px;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .upload-area {
@@ -316,6 +318,7 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     overflow: hidden;
+    max-height: 50vh;
 }
 
 .upload-area:hover, .upload-area:active {
@@ -358,6 +361,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    max-height: 50vh;
 }
 
 #previewImage {
