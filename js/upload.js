@@ -24,6 +24,29 @@ class DocumentUpload {
         if (this.fileInput) {
             this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
         }
+
+        const selectBtn = document.getElementById('selectImageBtn');
+        if (selectBtn) {
+            selectBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (this.fileInput) {
+                    this.fileInput.value = '';
+                    this.fileInput.click();
+                }
+            });
+        }
+
+        const uploadArea = document.getElementById('uploadArea');
+        if (uploadArea) {
+            uploadArea.addEventListener('click', (e) => {
+                if (e.target.closest('#selectImageBtn')) return;
+                if (this.fileInput) {
+                    this.fileInput.value = '';
+                    this.fileInput.click();
+                }
+            });
+        }
     }
 
     handleFileSelect(e) {

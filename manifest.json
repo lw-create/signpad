@@ -3,7 +3,7 @@
   "short_name": "SignPad",
   "description": "手机签名，快速签署合同",
   "start_url": "./",
-  "display": "standalone",
+  "display": "minimal-ui",
   "background_color": "#faf9f7",
   "theme_color": "#2563eb",
   "orientation": "portrait",
