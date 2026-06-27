@@ -86,7 +86,7 @@
 
         // 签名粗细调节
         document.getElementById('thicknessSlider')?.addEventListener('input', (e) => {
-            const thickness = parseInt(e.target.value);
+            const thickness = parseFloat(e.target.value);
             if (signaturePad) {
                 signaturePad.setThickness(thickness);
             }
@@ -195,12 +195,50 @@
             canvas.addEventListener('mousedown', updateConfirmButtonState);
             canvas.addEventListener('mousemove', updateConfirmButtonState);
         }
+
+        // PWA 安装提示
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallBanner();
+        });
+
+        document.getElementById('installBtn')?.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    hideInstallBanner();
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            hideInstallBanner();
+            deferredPrompt = null;
+        });
     }
 
     function updateConfirmButtonState() {
         const btn = document.getElementById('confirmSignBtn');
         if (btn && signaturePad) {
             btn.disabled = signaturePad.isEmpty();
+        }
+    }
+
+    function showInstallBanner() {
+        const banner = document.getElementById('installBanner');
+        if (banner && !localStorage.getItem('installDismissed')) {
+            banner.style.display = 'block';
+        }
+    }
+
+    function hideInstallBanner() {
+        const banner = document.getElementById('installBanner');
+        if (banner) {
+            banner.style.display = 'none';
         }
     }
 

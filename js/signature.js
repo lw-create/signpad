@@ -11,7 +11,8 @@ class SignaturePad {
         this.thickness = 3;
         this.lastX = 0;
         this.lastY = 0;
-        this.points = [];
+        this.strokes = [];
+        this.currentStroke = null;
     }
 
     init(canvasElement) {
@@ -38,30 +39,26 @@ class SignaturePad {
         this.ctx.lineJoin = 'round';
         this.setColor(this.color);
         this.setThickness(this.thickness);
+
+        this.redraw();
     }
 
     bindEvents() {
-        // 触摸事件
         this.canvas.addEventListener('touchstart', this.handleStart.bind(this), { passive: false });
         this.canvas.addEventListener('touchmove', this.handleMove.bind(this), { passive: false });
         this.canvas.addEventListener('touchend', this.handleEnd.bind(this));
         this.canvas.addEventListener('touchcancel', this.handleEnd.bind(this));
 
-        // 鼠标事件（用于测试）
         this.canvas.addEventListener('mousedown', this.handleStart.bind(this));
         this.canvas.addEventListener('mousemove', this.handleMove.bind(this));
         this.canvas.addEventListener('mouseup', this.handleEnd.bind(this));
         this.canvas.addEventListener('mouseleave', this.handleEnd.bind(this));
 
-        // 窗口大小变化
         window.addEventListener('resize', () => {
-            if (this.hasSignature) {
-                this.saveSignature();
-                this.setupCanvas();
-                this.loadSignature();
-            } else {
-                this.setupCanvas();
-            }
+            const savedStrokes = JSON.parse(JSON.stringify(this.strokes));
+            this.setupCanvas();
+            this.strokes = savedStrokes;
+            this.redraw();
         });
     }
 
@@ -80,9 +77,13 @@ class SignaturePad {
         const pos = this.getPos(e);
         this.lastX = pos.x;
         this.lastY = pos.y;
-        this.points = [pos];
 
-        // 隐藏占位符
+        this.currentStroke = {
+            color: this.color,
+            thickness: this.thickness,
+            points: [pos]
+        };
+
         this.canvas.parentElement.classList.add('signed');
     }
 
@@ -91,8 +92,10 @@ class SignaturePad {
         e.preventDefault();
 
         const pos = this.getPos(e);
-        this.points.push(pos);
+        this.currentStroke.points.push(pos);
 
+        this.ctx.strokeStyle = this.currentStroke.color;
+        this.ctx.lineWidth = this.currentStroke.thickness;
         this.ctx.beginPath();
         this.ctx.moveTo(this.lastX, this.lastY);
         this.ctx.lineTo(pos.x, pos.y);
@@ -107,13 +110,48 @@ class SignaturePad {
     handleEnd(e) {
         if (this.isDrawing) {
             this.isDrawing = false;
-            this.points = [];
+            if (this.currentStroke && this.currentStroke.points.length > 1) {
+                this.strokes.push(this.currentStroke);
+            }
+            this.currentStroke = null;
+        }
+    }
+
+    redraw() {
+        if (!this.ctx) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const rect = this.canvas.getBoundingClientRect();
+
+        this.ctx.clearRect(0, 0, rect.width, rect.height);
+
+        for (const stroke of this.strokes) {
+            if (stroke.points.length < 2) continue;
+
+            this.ctx.strokeStyle = stroke.color;
+            this.ctx.lineWidth = stroke.thickness;
+            this.ctx.beginPath();
+            this.ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+
+            for (let i = 1; i < stroke.points.length; i++) {
+                this.ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+            }
+
+            this.ctx.stroke();
+        }
+
+        this.hasSignature = this.strokes.length > 0;
+        if (this.hasSignature) {
+            this.canvas.parentElement.classList.add('signed');
+        } else {
+            this.canvas.parentElement.classList.remove('signed');
         }
     }
 
     clear() {
-        const dpr = window.devicePixelRatio || 1;
-        this.ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
+        const rect = this.canvas.getBoundingClientRect();
+        this.ctx.clearRect(0, 0, rect.width, rect.height);
+        this.strokes = [];
         this.hasSignature = false;
         this.canvas.parentElement.classList.remove('signed');
     }
@@ -123,12 +161,24 @@ class SignaturePad {
         if (this.ctx) {
             this.ctx.strokeStyle = color;
         }
+        if (this.strokes.length > 0) {
+            for (const stroke of this.strokes) {
+                stroke.color = color;
+            }
+            this.redraw();
+        }
     }
 
     setThickness(thickness) {
         this.thickness = thickness;
         if (this.ctx) {
             this.ctx.lineWidth = thickness;
+        }
+        if (this.strokes.length > 0) {
+            for (const stroke of this.strokes) {
+                stroke.thickness = thickness;
+            }
+            this.redraw();
         }
     }
 
@@ -139,8 +189,6 @@ class SignaturePad {
     getImage() {
         if (!this.hasSignature) return null;
 
-        // 创建透明背景的画布，使用实际像素尺寸
-        const dpr = window.devicePixelRatio || 1;
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         
@@ -149,7 +197,6 @@ class SignaturePad {
         tempCanvas.height = canvasHeight;
         const tempCtx = tempCanvas.getContext('2d');
 
-        // 直接按实际像素尺寸绘制，不缩放
         tempCtx.drawImage(this.canvas, 0, 0, canvasWidth, canvasHeight);
 
         return tempCanvas.toDataURL('image/png');
@@ -179,5 +226,4 @@ class SignaturePad {
     }
 }
 
-// 导出
 window.SignaturePad = SignaturePad;
