@@ -132,24 +132,6 @@ body {
     gap: 16px;
 }
 
-.rotate-hint {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--accent-light);
-    color: var(--accent);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-}
-
-@media (orientation: portrait) {
-    .rotate-hint {
-        display: flex;
-    }
-}
-
 .signature-area {
     flex: 1;
     position: relative;
@@ -430,6 +412,8 @@ body {
     height: 100%;
     object-fit: contain;
     pointer-events: none;
+    -webkit-user-drag: none;
+    user-drag: none;
 }
 
 .resize-handle {

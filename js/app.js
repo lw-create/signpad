@@ -8,6 +8,7 @@
     const state = {
         currentStep: 'sign',
         signatureImage: null,
+        signatureSize: { width: 300, height: 120 },
         documentImage: null,
         signaturePosition: {
             x: 0,
@@ -205,8 +206,17 @@
             // 设置文档图片
             await exporter.setDocumentImage(state.documentImage);
 
-            // 设置签名图片
+            // 设置签名图片并获取实际尺寸
             await exporter.setSignatureImage(state.signatureImage);
+            
+            // 获取签名图片实际尺寸
+            const sigImg = new Image();
+            await new Promise((resolve, reject) => {
+                sigImg.onload = resolve;
+                sigImg.onerror = reject;
+                sigImg.src = state.signatureImage;
+            });
+            state.signatureSize = { width: sigImg.width, height: sigImg.height };
 
             // 显示签名预览
             const signaturePreview = document.getElementById('signaturePreview');
@@ -219,9 +229,12 @@
             if (!container) return;
             const containerRect = container.getBoundingClientRect();
 
+            // 以宽度 200px 为基准，高度按比例
+            const baseWidth = 200;
+            const ratio = state.signatureSize.height / state.signatureSize.width;
             const defaultScale = 0.7;
-            const overlayWidth = 180 * defaultScale;
-            const overlayHeight = 72 * defaultScale;
+            const overlayWidth = baseWidth * defaultScale;
+            const overlayHeight = baseWidth * ratio * defaultScale;
 
             state.signaturePosition = {
                 x: containerRect.width / 2 - overlayWidth / 2,
@@ -258,20 +271,25 @@
         const overlay = document.getElementById('signatureOverlay');
         if (!overlay) return;
 
+        const baseWidth = 200;
+        const ratio = state.signatureSize.height / state.signatureSize.width;
         overlay.style.left = state.signaturePosition.x + 'px';
         overlay.style.top = state.signaturePosition.y + 'px';
+        overlay.style.transformOrigin = 'top left';
         overlay.style.transform = `scale(${state.signaturePosition.scale}) rotate(${state.signaturePosition.rotation}deg)`;
-        overlay.style.width = '180px';
-        overlay.style.height = '72px';
+        overlay.style.width = baseWidth + 'px';
+        overlay.style.height = (baseWidth * ratio) + 'px';
     }
 
     function resetSignaturePosition() {
         const container = document.getElementById('placeContainer');
         const containerRect = container.getBoundingClientRect();
 
+        const baseWidth = 200;
+        const ratio = state.signatureSize.height / state.signatureSize.width;
         const defaultScale = 0.7;
-        const overlayWidth = 180 * defaultScale;
-        const overlayHeight = 72 * defaultScale;
+        const overlayWidth = baseWidth * defaultScale;
+        const overlayHeight = baseWidth * ratio * defaultScale;
 
         state.signaturePosition = {
             x: containerRect.width / 2 - overlayWidth / 2,

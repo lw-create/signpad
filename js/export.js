@@ -86,11 +86,11 @@ class Exporter {
 
         ctx.drawImage(this.documentImage, 0, 0);
 
-        const sigOverlayWidth = 180;
-        const sigOverlayHeight = 72;
+        const baseWidth = 200;
+        const ratio = this.signatureImage.height / this.signatureImage.width;
 
-        const screenSigW = sigOverlayWidth * this.signaturePosition.scale;
-        const screenSigH = sigOverlayHeight * this.signaturePosition.scale;
+        const screenSigW = baseWidth * this.signaturePosition.scale;
+        const screenSigH = baseWidth * ratio * this.signaturePosition.scale;
 
         const origSigW = screenSigW / this.documentScale;
         const origSigH = screenSigH / this.documentScale;
