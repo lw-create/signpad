@@ -124,7 +124,26 @@
         // 确认位置
         document.getElementById('confirmPlaceBtn')?.addEventListener('click', () => {
             goToStep('export');
-            renderExport();
+            setTimeout(() => {
+                renderExport();
+            }, 100);
+        });
+
+        // 缩放滑块
+        document.getElementById('scaleSlider')?.addEventListener('input', (e) => {
+            const scale = parseFloat(e.target.value);
+            state.signaturePosition.scale = scale;
+            exporter.setSignaturePosition(
+                state.signaturePosition.x,
+                state.signaturePosition.y,
+                state.signaturePosition.scale,
+                state.signaturePosition.rotation
+            );
+            updateSignatureOverlay();
+            const valueEl = document.getElementById('scaleValue');
+            if (valueEl) {
+                valueEl.textContent = Math.round(scale * 100) + '%';
+            }
         });
 
         // 下载
@@ -200,18 +219,22 @@
             if (!container) return;
             const containerRect = container.getBoundingClientRect();
 
-            if (exporter.documentScale) {
-                const signatureWidth = 200 * exporter.documentScale;
-                const signatureHeight = 80 * exporter.documentScale;
+            const defaultScale = 0.7;
+            const overlayWidth = 180 * defaultScale;
+            const overlayHeight = 72 * defaultScale;
 
-                // 默认位置在底部居中
-                state.signaturePosition = {
-                    x: containerRect.width / 2 - signatureWidth / 2,
-                    y: containerRect.height - signatureHeight - 50,
-                    scale: 1,
-                    rotation: 0
-                };
-            }
+            state.signaturePosition = {
+                x: containerRect.width / 2 - overlayWidth / 2,
+                y: containerRect.height - overlayHeight - 40,
+                scale: defaultScale,
+                rotation: 0
+            };
+
+            // 更新滑块
+            const slider = document.getElementById('scaleSlider');
+            const scaleValue = document.getElementById('scaleValue');
+            if (slider) slider.value = defaultScale;
+            if (scaleValue) scaleValue.textContent = Math.round(defaultScale * 100) + '%';
 
             // 设置位置
             exporter.setSignaturePosition(
@@ -246,13 +269,14 @@
         const container = document.getElementById('placeContainer');
         const containerRect = container.getBoundingClientRect();
 
-        const signatureWidth = 200 * (exporter.documentScale || 1);
-        const signatureHeight = 80 * (exporter.documentScale || 1);
+        const defaultScale = 0.7;
+        const overlayWidth = 180 * defaultScale;
+        const overlayHeight = 72 * defaultScale;
 
         state.signaturePosition = {
-            x: containerRect.width / 2 - signatureWidth / 2,
-            y: containerRect.height - signatureHeight - 50,
-            scale: 1,
+            x: containerRect.width / 2 - overlayWidth / 2,
+            y: containerRect.height - overlayHeight - 40,
+            scale: defaultScale,
             rotation: 0
         };
 
@@ -262,6 +286,12 @@
             state.signaturePosition.scale,
             state.signaturePosition.rotation
         );
+
+        // 更新滑块
+        const slider = document.getElementById('scaleSlider');
+        const scaleValue = document.getElementById('scaleValue');
+        if (slider) slider.value = defaultScale;
+        if (scaleValue) scaleValue.textContent = Math.round(defaultScale * 100) + '%';
 
         updateSignatureOverlay();
     }

@@ -419,6 +419,10 @@ body {
     position: absolute;
     cursor: move;
     touch-action: none;
+    border: 2px dashed var(--accent);
+    border-radius: 4px;
+    background: rgba(37, 99, 235, 0.05);
+    box-sizing: border-box;
 }
 
 #signaturePreview {
@@ -449,6 +453,58 @@ body {
     height: 8px;
     border-right: 2px solid white;
     border-bottom: 2px solid white;
+}
+
+.scale-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+}
+
+.scale-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.scale-control input[type="range"] {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+}
+
+.scale-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+}
+
+.scale-control input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+}
+
+.scale-value {
+    font-size: 13px;
+    color: var(--text-hint);
+    min-width: 48px;
+    text-align: right;
+    flex-shrink: 0;
 }
 
 .place-hint {

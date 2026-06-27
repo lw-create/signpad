@@ -111,14 +111,15 @@
                     <canvas id="documentCanvas"></canvas>
                     <div class="signature-overlay" id="signatureOverlay">
                         <img id="signaturePreview" alt="签名预览">
-                        <div class="resize-handle"></div>
                     </div>
                 </div>
-                <div class="place-hint">
-                    <span>拖拽调整签名位置，双指缩放大小</span>
+                <div class="scale-control">
+                    <span class="scale-label">大小</span>
+                    <input type="range" id="scaleSlider" min="0.3" max="3" step="0.1" value="1">
+                    <span class="scale-value" id="scaleValue">100%</span>
                 </div>
                 <div class="place-actions">
-                    <button class="btn btn-secondary" id="resetPositionBtn">重置位置</button>
+                    <button class="btn btn-secondary" id="resetPositionBtn">重置</button>
                     <button class="btn btn-primary" id="confirmPlaceBtn">确认位置</button>
                 </div>
             </div>

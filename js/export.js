@@ -4,9 +4,12 @@
 class Exporter {
     constructor() {
         this.documentCanvas = null;
-        this.signatureImage = null;
         this.exportCanvas = null;
+        this.documentImage = null;
+        this.signatureImage = null;
         this.signaturePosition = { x: 0, y: 0, scale: 1, rotation: 0 };
+        this.documentScale = 1;
+        this.documentOffset = { x: 0, y: 0 };
     }
 
     init(documentCanvasId, exportCanvasId) {
@@ -16,24 +19,26 @@ class Exporter {
     }
 
     setDocumentImage(imageData) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
                 this.documentImage = img;
                 this.renderDocumentCanvas();
                 resolve();
             };
+            img.onerror = reject;
             img.src = imageData;
         });
     }
 
     setSignatureImage(imageData) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
                 this.signatureImage = img;
                 resolve();
             };
+            img.onerror = reject;
             img.src = imageData;
         });
     }
@@ -45,7 +50,8 @@ class Exporter {
         const container = this.documentCanvas.parentElement;
         const containerRect = container.getBoundingClientRect();
 
-        // 计算缩放比例
+        if (containerRect.width === 0 || containerRect.height === 0) return;
+
         const scaleX = containerRect.width / this.documentImage.width;
         const scaleY = containerRect.height / this.documentImage.height;
         const scale = Math.min(scaleX, scaleY);
@@ -56,7 +62,6 @@ class Exporter {
         this.documentCanvas.width = containerRect.width;
         this.documentCanvas.height = containerRect.height;
 
-        // 居中绘制
         const offsetX = (containerRect.width - width) / 2;
         const offsetY = (containerRect.height - height) / 2;
 
@@ -72,37 +77,39 @@ class Exporter {
     }
 
     getCompositeImage() {
-        if (!this.documentCanvas || !this.signatureImage) return null;
+        if (!this.documentImage || !this.signatureImage) return null;
 
-        const container = this.documentCanvas.parentElement;
-        const containerRect = container.getBoundingClientRect();
-
-        // 创建临时画布
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = this.documentImage.width;
         tempCanvas.height = this.documentImage.height;
         const ctx = tempCanvas.getContext('2d');
 
-        // 绘制文档
         ctx.drawImage(this.documentImage, 0, 0);
 
-        // 计算签名位置
-        const signatureWidth = this.signatureImage.width * this.signaturePosition.scale * this.documentScale;
-        const signatureHeight = this.signatureImage.height * this.signaturePosition.scale * this.documentScale;
+        const sigOverlayWidth = 180;
+        const sigOverlayHeight = 72;
 
-        const x = this.documentOffset.x + this.signaturePosition.x * this.documentScale;
-        const y = this.documentOffset.y + this.signaturePosition.y * this.documentScale;
+        const screenSigW = sigOverlayWidth * this.signaturePosition.scale;
+        const screenSigH = sigOverlayHeight * this.signaturePosition.scale;
 
-        // 绘制签名
+        const origSigW = screenSigW / this.documentScale;
+        const origSigH = screenSigH / this.documentScale;
+
+        const origX = (this.signaturePosition.x - this.documentOffset.x) / this.documentScale;
+        const origY = (this.signaturePosition.y - this.documentOffset.y) / this.documentScale;
+
+        const centerX = origX + origSigW / 2;
+        const centerY = origY + origSigH / 2;
+
         ctx.save();
-        ctx.translate(x + signatureWidth / 2, y + signatureHeight / 2);
+        ctx.translate(centerX, centerY);
         ctx.rotate(this.signaturePosition.rotation * Math.PI / 180);
         ctx.drawImage(
             this.signatureImage,
-            -signatureWidth / 2,
-            -signatureHeight / 2,
-            signatureWidth,
-            signatureHeight
+            -origSigW / 2,
+            -origSigH / 2,
+            origSigW,
+            origSigH
         );
         ctx.restore();
 
@@ -112,16 +119,18 @@ class Exporter {
     renderExportPreview() {
         if (!this.exportCanvas) return;
 
+        const container = this.exportCanvas.parentElement;
+        const containerRect = container.getBoundingClientRect();
+
+        if (containerRect.width === 0 || containerRect.height === 0) return;
+
         const compositeImage = this.getCompositeImage();
         if (!compositeImage) return;
 
         const img = new Image();
         img.onload = () => {
             const ctx = this.exportCanvas.getContext('2d');
-            const container = this.exportCanvas.parentElement;
-            const containerRect = container.getBoundingClientRect();
 
-            // 计算缩放
             const scaleX = containerRect.width / img.width;
             const scaleY = containerRect.height / img.height;
             const scale = Math.min(scaleX, scaleY);
@@ -132,7 +141,8 @@ class Exporter {
             this.exportCanvas.width = containerRect.width;
             this.exportCanvas.height = containerRect.height;
 
-            ctx.clearRect(0, 0, containerRect.width, containerRect.height);
+            ctx.fillStyle = '#f5f4f2';
+            ctx.fillRect(0, 0, containerRect.width, containerRect.height);
             ctx.drawImage(img, (containerRect.width - width) / 2, (containerRect.height - height) / 2, width, height);
         };
         img.src = compositeImage;
@@ -140,12 +150,17 @@ class Exporter {
 
     download(filename = 'signed_document.png') {
         const compositeImage = this.getCompositeImage();
-        if (!compositeImage) return;
+        if (!compositeImage) {
+            alert('生成失败，请重试');
+            return;
+        }
 
         const link = document.createElement('a');
         link.download = filename;
         link.href = compositeImage;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
     }
 
     getImageData() {
@@ -153,5 +168,4 @@ class Exporter {
     }
 }
 
-// 导出
 window.Exporter = Exporter;
